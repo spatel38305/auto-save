@@ -1,7 +1,5 @@
 #include <yed/plugin.h>
 
-void set_save_frequency( int nargs, char **args );
-
 void auto_save( yed_event *ye );
 
 unsigned int save_frequency;
@@ -18,34 +16,25 @@ int yed_plugin_boot( yed_plugin *self )
 
     yed_plugin_add_event_handler( self, yeh );
 
-    yed_plugin_set_command( self, "auto-save-time", set_save_frequency );
-
     save_frequency = 30000;
     last_time = measure_time_now_ms();
 
-    yed_set_var( "auto-save-frequency-ms", "30000" );
+    if ( yed_get_var( "auto-save-frequency-ms" ) == NULL )
+    {
+        yed_set_var( "auto-save-frequency-ms", "30000" );
+    }
+    else
+    {
+        yed_get_var_as_int( "auto-save-frequency-ms", &save_frequency );
+
+        if ( save_frequency < 10000 )
+        {
+            save_frequency = 10000;
+            yed_set_var( "auto-save-frequency-ms", "10000" );
+        }
+    }
 
     return 0;
-}
-
-void set_save_frequency( int nargs, char **args )
-{
-    unsigned int new_frequency;
-
-    if ( nargs != 1 )
-    {
-        yed_cerr( "missing 'frequency' (ms) as first argument" );
-        return;                                                                                                                                                                                                                                                                              return;
-    }
-
-    if ( !sscanf( args[0], "%u", &new_frequency ) )
-    {
-        yed_cerr( "couldn't parse int from argument '%s'", args[0] );
-        return;
-    }
-
-    save_frequency = new_frequency;
-    yed_set_var( "auto-save-frequency-ms", args[0] );
 }
 
 void auto_save( yed_event *ye )
